@@ -1,1 +1,1 @@
-# terracotta-server
+# landsat-autotiler
