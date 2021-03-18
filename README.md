@@ -1,1 +1,1 @@
-# landsat-autotiler
+# autotiler
