@@ -1,0 +1,16 @@
+name: autotiler
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - dask
+  - numpy
+  - pandas
+  - panel
+  - pip
+  - rasterio
+  - streamlit
+  - terracotta
+  - xarray
+  - pip:
+    - rio-hist

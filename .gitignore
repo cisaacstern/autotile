@@ -1,3 +1,9 @@
+# geotiffs
+geotiffs/0_raw/*
+geotiffs/1_toa/*
+geotiffs/2_hst/*
+geotiffs/3_cog/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
