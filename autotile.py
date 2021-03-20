@@ -1,4 +1,5 @@
 import sys
+import subprocess
 
 #import jinja
 
@@ -27,7 +28,7 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'tune':
 
-        print('Tune!')
+        subprocess.run(["./scripts/tune.sh"])
     
     elif sys.argv[1] == 'stage':
 
@@ -45,7 +46,7 @@ if __name__ == '__main__':
         at.stage_tiffs()
         #at.render_html()
 
-        #subprocess.run[".", "./scripts/stage.sh"]
+        #subprocess.run(["./scripts/stage.sh"])
 
     elif sys.argv[1] == 'serve':
 
