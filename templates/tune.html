@@ -1,0 +1,27 @@
+{% extends base %}
+
+<!-- goes in body -->
+{% block postamble %}
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+{% endblock %}
+
+<!-- goes in body -->
+{% block contents %}
+{{ app_title }}
+<p>
+    Use this app to interactively change the values of an RGB raster
+    and then save it to disk.
+</p>
+<br>
+<div class="container">
+  <div class="row">
+    <div class="col-sm">
+      {{ embed(roots.A) }}
+    </div>
+    <div class="col-sm">
+      {{ embed(roots.B) }}
+      {{ embed(roots.C) }}
+    </div>
+  </div>
+</div>
+{% endblock %}
