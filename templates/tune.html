@@ -7,18 +7,23 @@
 
 <!-- goes in body -->
 {% block contents %}
-{{ app_title }}
-<p>
+
+<div class="row" style="margin-left: 2em; margin-top: 1em;">
+  <div class="col-sm">
+  {{ app_title }}
+  <p>
     Use this app to interactively change the values of an RGB raster
     and then save it to disk.
-</p>
+  </p>
+  </div>
+</div>
 <br>
 <div class="container">
   <div class="row">
     <div class="col-sm">
       {{ embed(roots.A) }}
     </div>
-    <div class="col-sm">
+    <div class="col-sm" style="margin-bottom: 2em;">
       {{ embed(roots.B) }}
       {{ embed(roots.C) }}
     </div>

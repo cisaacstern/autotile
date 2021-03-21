@@ -8,7 +8,6 @@ bands = {
 
 url_args = {
     'base_url': 'https://landsat-pds.s3.amazonaws.com/c1/L8', 
-    'latlon': ('a', 'b'), 
     'datestring': '20141108_20170303', 
     'suffixes': list(bands.values()) + ['_MTL.json',],
 }
@@ -18,13 +17,15 @@ paths = {
     for i, target in enumerate(('raw','toa','hst','cog'))
 }
 
+tiles_url_tail = '/rgb/{z}/{x}/{y}.png?r=red&g=grn&b=blu&r_range=[0,1]&g_range=[0,1]&b_range=[0,1]'
+
 tiles = {
     'hst' : {
-        'name' : 'Open Street Map',
-        'tiles' : 'openstreetmap',
+        'name' : 'Histogram-matched COGs',
+        'tiles' : 'http://localhost:5001' + tiles_url_tail,
     },
     'toa' : {
-        'name' : 'Top of atmosphere',
-        'tiles' : 'http://localhost:5000/rgb/{z}/{x}/{y}.png?r=red&g=grn&b=blu&r_range=[0,1]&g_range=[0,1]&b_range=[0,1]', 
+        'name' : 'Top-of-atmosphere COGs',
+        'tiles' : 'http://localhost:5000' + tiles_url_tail, 
     }
 }
