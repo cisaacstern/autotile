@@ -2,12 +2,16 @@
 import os
 import json
 import requests
+import logging
 
 import rasterio
 import numpy as np
 import xarray as xr
 
 import config
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 class Url():
     '''
@@ -92,16 +96,15 @@ class Reflectance():
         '''
         M_p, A_p = self._load_scale_factors(metafile, band_number)
         toa = M_p * ds + A_p
-        return toa
+        return np.squeeze(toa)
 
 
 class Intake(Reflectance):
     '''Intakes data
 
     '''
-    def __init__(self, urls, label):
+    def __init__(self, urls):
         self.urls = urls
-        self.label = label
 
     @staticmethod
     def _download_file(in_filename, out_filename):
@@ -126,7 +129,7 @@ class Intake(Reflectance):
         for url, fn in zip(self.urls, filenames):
             self._download_file(url, fn)
 
-    def _return_toa_list(self):
+    def _return_toa_dict(self):
         '''
         Parameters
         ----------
@@ -138,31 +141,55 @@ class Intake(Reflectance):
         chunks = {'band': 1, 'x': 1024, 'y': 1024}
         x_arrs = [xr.open_rasterio(t, chunks=chunks) for t in self.tiffs]
 
-        toa_list = [
-            self.calc_reflectance(array, band_number=i, metafile=self.meta)
-            for array, i in zip(x_arrs, (4,3,2)) 
-        ]
-        toa_list = [np.squeeze(array) for array in toa_list]
-        return toa_list
+        toa_dict = {
+            key:self.calc_reflectance(arr, band_number=i, metafile=self.meta)
+            for arr, i, key in zip(x_arrs, (4,3,2), ('red', 'grn', 'blu')) 
+        }
+        return toa_dict
+
+    @staticmethod
+    def _write_gtiff(array, outpath, dims, crs, transform):
+        '''
+        Parameters
+        ----------
+
+        Returns
+        -------
+        
+        '''
+        with rasterio.open(
+            outpath,
+            'w',
+            driver='GTiff',
+            height=dims[0],
+            width=dims[1],
+            count=1,
+            dtype=array.dtype,
+            crs=crs,
+            transform=transform,
+        ) as dst:
+            dst.write(array, 1)
+
 
     def save_toa_tiffs(self):
         '''Credit to the rasterio docs
 
         '''
-        toa = self._return_toa_list()
-        ref = rasterio.open(f'{config.paths["raw"]}/red.tiff')
-        print(ref.transform)
-        with rasterio.open(
-            'geotiffs/1_toa/new.tif',
-            'w',
-            driver='GTiff',
-            height=toa[0].shape[0], #MAKE THIS A DICT!
-            width=toa[0].shape[1],
-            count=3,
-            dtype=toa[0].dtype,
-            crs='+proj=latlong',
-            transform=ref.transform,
-        ) as dst:
-            dst.write(toa[0], 1)
-            dst.write(toa[1], 2)
-            dst.write(toa[2], 3)
+        toa_dict = self._return_toa_dict()
+
+        reference = rasterio.open(f'{config.paths["raw"]}/red.tiff')
+
+        scene_id = 'center'
+        print('This scene_id is temporary.')
+
+        for i in range(len(toa_dict)):
+            array = tuple(toa_dict.values())[i]
+            band_name = tuple(toa_dict.keys())[i]
+            self._write_gtiff(
+                array=array,
+                outpath=f'geotiffs/1_toa/{scene_id}_{band_name}.tif',
+                dims=(array.shape[0], array.shape[1]),
+                crs=reference.crs,
+                transform=reference.transform,
+            )
+            print('Saved %s to disk', band_name)

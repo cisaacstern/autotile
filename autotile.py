@@ -1,57 +1,95 @@
 import sys
 import subprocess
+import logging
 
-#import jinja
+from jinja2 import Environment, FileSystemLoader
 
 import config
 import intake
-#from tune import Tune
 #from view import View
 
-class AutoTile(intake.Intake): #, Tune, View):
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-    def __init__(self, **kwargs):
+class AutoTile(intake.Intake):
+
+    def __init__(self, location, tooltip, tiles, **kwargs):
         super(AutoTile, self).__init__(**kwargs)
+        self.location = location
+        self.tooltip = tooltip
+        self.tiles = tiles
 
-    def stage_tiffs(self):
+    def write_toa_tiffs(self):
         '''
         '''
         self.request_tiffs()
         self.save_toa_tiffs()
 
-    def render_html(self):
+    def render_streamlit_view(self):
         '''
         '''
-        pass
+        env = Environment(loader=FileSystemLoader('.'))
+        template = env.get_template('templates/view.py')
+
+        rendered_view = template.render(
+            tooltip=self.tooltip,
+            location=self.location,
+        )
+
+        with open("_rendered_view.py", "w") as dst:
+            dst.write(rendered_view)
+
+class OptimizedIngest():
+
+
+    
+    def optimize_tiffs_as_cogs(self):
+        '''
+        '''
+        subprocess.run(["./scripts/optimize.sh"])
+
+    def ingest_cogs_to_sqlite(self, scene_id):
+        '''
+        '''
+        filepattern = '$NOT_MATCHED/' + scene_id + "_{band}.tif"
+        cmd = f"terracotta ingest {filepattern} -o _notmatched.sqlite"
+        subprocess.Popen(cmd, shell=True)
+
     
 if __name__ == '__main__':
-
-    if sys.argv[1] == 'tune':
-
-        subprocess.run(["./scripts/tune.sh"])
     
-    elif sys.argv[1] == 'stage':
+    if sys.argv[1] == 'stage':
+        
+        autotile_kwargs = {
+            'urls' : intake.Url(**config.url_args).return_urls(),
+            'location' : [float(coord) for coord in sys.argv[2:4]],
+            'tooltip' : f"'{sys.argv[4]}'",
+            'tiles' : config.tiles,
+        }
+        at = AutoTile(**autotile_kwargs)
+        at.write_toa_tiffs()
+        at.render_streamlit_view()
 
-        urls = intake.Url(**config.url_args).return_urls()
+    elif sys.argv[1] == 'tune':
 
-        #arguments = [float(arg) for arg in sys.argv[1:3] else arg]
-        #arguments[3] = strptime(arguments[3])
-        #arguments.pop(0)
+        subprocess.run(['panel', 'serve', 'tune.py', '--show'])
 
-        #assert arguments[0] in np.range(), "This must be a latitude."
-        #assert arguments[1] in np.range(), "This must be a latitude."
-        #assert arguments[2] in STACJSON, "Not a valid time."
+    elif sys.argv[1] == 'match':
 
-        at = AutoTile(urls=urls, label=sys.argv[2])
-        at.stage_tiffs()
-        #at.render_html()
+        pass
 
-        #subprocess.run(["./scripts/stage.sh"])
+    elif sys.argv[1] == 'optimize':
+
+        o = OptimizedIngest()
+        o.optimize_tiffs_as_cogs()
+        scenes = ['center',]
+        for s in scenes:
+            o.ingest_cogs_to_sqlite(scene_id=s)
 
     elif sys.argv[1] == 'serve':
 
-        #subprocess.run[".", "./scripts/serve.sh"]
-        print('Serve!')
+        subprocess.run(["./scripts/serve.sh"])
+        # subprocess.run(["streamlit", "run", "_rendered_view.py"])
 
     elif sys.argv[1] == 'down':
 
