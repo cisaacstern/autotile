@@ -19,9 +19,10 @@ logger.setLevel(logging.INFO)
 class Tune(param.Parameterized):
     '''
     '''
-    def __init__(self, rgb_array, transform):
+    def __init__(self, rgb_array, crs, transform):
         super(Tune, self).__init__()
         self.rgb_array = rgb_array
+        self.crs = crs
         self.transform = transform
         
     rgb_scalar = param.Number(1.0, bounds=(0.0, 10.0))
@@ -38,10 +39,11 @@ class Tune(param.Parameterized):
     def _plot_array(array, hist_kwargs):
         '''
         '''
-        fig, axs = plt.subplots(2, 1, figsize=(7,14))
+        fig, axs = plt.subplots(1, 2, figsize=(14,7))
         rshow(array, ax=axs[0])
         rshow_hist(array, **hist_kwargs, ax=axs[1])
         axs[1].set_xlim(0,1)
+        axs[1].set_ylim(0,3000)
         plt.close('all')
         return fig
     
@@ -62,17 +64,17 @@ class Tune(param.Parameterized):
         '''
         arr = self._adjust_array()
 
-        logger.info('Writing .tiff to disk...')
+        logger.info('Writing .tif to disk...')
 
         with rasterio.open(
-            'geotiffs/histogram_reference.tiff',
+            'geotiffs/reference.tif',
             'w',
             driver='GTiff',
             height=arr.shape[1],
             width=arr.shape[2],
             count=3,
             dtype=arr.dtype,
-            crs='+proj=latlong',
+            crs=self.crs,
             transform=self.transform,
         ) as dst:
             dst.write(arr[0,:,:], 1)
@@ -84,7 +86,7 @@ class Tune(param.Parameterized):
     def instantiate_button(self):
         '''
         '''
-        self.button = pn.widgets.Button(name='Save reference .tiff to disk')
+        self.button = pn.widgets.Button(name='Save reference.tif to disk')
         self.button.on_click(self._save_tiff)
     
     @param.depends('rgb_scalar', 'red_scalar', 
@@ -95,12 +97,12 @@ class Tune(param.Parameterized):
         arr = self._adjust_array()
         return self._plot_array(arr, self.hist_kwargs)
     
-
-src = rasterio.open("geotiffs/1_toa/new.tif")
-downsampled_toa_bands = [src.read(i)[::50, ::50] for i in range(1,4)]
+bands = ('red', 'grn', 'blu')
+srcs = [rasterio.open(f"geotiffs/1_toa/center_{b}.tif") for b in bands]
+downsampled_toa_bands = [s.read(1)[::50, ::50] for s in srcs]
 rgb_array = np.dstack(tuple(downsampled_toa_bands))
 
-tune = Tune(rgb_array=rgb_array, transform=src.transform)
+tune = Tune(rgb_array=rgb_array, crs=srcs[0].crs, transform=srcs[0].transform)
 tune.instantiate_button()
 
 env = Environment(loader=FileSystemLoader('.'))

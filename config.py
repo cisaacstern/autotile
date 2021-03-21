@@ -17,3 +17,14 @@ paths = {
     target : pathlib.Path('geotiffs', f'{i}_{target}')
     for i, target in enumerate(('raw','toa','hst','cog'))
 }
+
+tiles = {
+    'hst' : {
+        'name' : 'Open Street Map',
+        'tiles' : 'openstreetmap',
+    },
+    'toa' : {
+        'name' : 'Top of atmosphere',
+        'tiles' : 'http://localhost:5000/rgb/{z}/{x}/{y}.png?r=red&g=grn&b=blu&r_range=[0,1]&g_range=[0,1]&b_range=[0,1]', 
+    }
+}
