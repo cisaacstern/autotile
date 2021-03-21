@@ -6,7 +6,6 @@ from jinja2 import Environment, FileSystemLoader
 
 import config
 import intake
-#from view import View
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -40,8 +39,6 @@ class AutoTile(intake.Intake):
             dst.write(rendered_view)
 
 class OptimizedIngest():
-
-
     
     def optimize_tiffs_as_cogs(self):
         '''
@@ -51,18 +48,31 @@ class OptimizedIngest():
     def ingest_cogs_to_sqlite(self, scene_id):
         '''
         '''
-        filepattern = '$NOT_MATCHED/' + scene_id + "_{band}.tif"
-        cmd = f"terracotta ingest {filepattern} -o _notmatched.sqlite"
-        subprocess.Popen(cmd, shell=True)
+        for path, database in zip(
+            ('$NOT_MATCHED/', '$MATCHED/'),
+            ('_notmatched.sqlite', '_matched.sqlite')):
+
+            filepattern = f'{path}' + scene_id + "_{band}.tif"
+            cmd = f"terracotta ingest {filepattern} -o {database}"
+            subprocess.Popen(cmd, shell=True)
 
     
 if __name__ == '__main__':
+
+    if sys.argv[1] == 'help':
+
+        print("""
+        Start with, e.g.:
+            autotile stage 34.0739 -118.2400 'Dodger Stadium'
+        """)
     
-    if sys.argv[1] == 'stage':
+    elif sys.argv[1] == 'stage':
         
+        latlon = [float(coord) for coord in sys.argv[2:4]]
+        urls = intake.Url(**config.url_args, latlon=latlon).return_urls()
         autotile_kwargs = {
-            'urls' : intake.Url(**config.url_args).return_urls(),
-            'location' : [float(coord) for coord in sys.argv[2:4]],
+            'urls' : urls,
+            'location' : latlon,
             'tooltip' : f"'{sys.argv[4]}'",
             'tiles' : config.tiles,
         }
@@ -73,10 +83,6 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'tune':
 
         subprocess.run(['panel', 'serve', 'tune.py', '--show'])
-
-    elif sys.argv[1] == 'match':
-
-        pass
 
     elif sys.argv[1] == 'optimize':
 
@@ -89,17 +95,19 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'serve':
 
         subprocess.run(["./scripts/serve.sh"])
-        # subprocess.run(["streamlit", "run", "_rendered_view.py"])
 
     elif sys.argv[1] == 'down':
 
-        #subprocess.run[".", "./scripts/down.sh"]
-        print('Down!')
+        subprocess.run(["./scripts/down.sh"])
+
+    elif sys.argv[1] == 'reset':
+
+        subprocess.run(["./scripts/reset_geotiffs.sh"])
 
     else:
 
-        valids = ('tune', 'stage', 'serve', 'down')
+        valids = ('stage', 'tune', 'optimize', 'serve', 'down', 'reset')
 
-        logger.WARNING(
-            "%s invalid as 1st arg. Must be one of %s", (sys.argv[0], valids)
+        logger.warning( 
+            "Invalid arg: '%s'. Must be one of %s" % (sys.argv[1], valids)
         )

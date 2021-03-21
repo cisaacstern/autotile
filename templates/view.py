@@ -9,7 +9,7 @@ location = {{ location|safe }}
 
 
 m = folium.Map(
-    location=location, zoom_start=16, 
+    location=location, zoom_start=12, 
     tiles=config.tiles['hst']['tiles'], 
     attr=config.tiles['hst']['name'],
 )

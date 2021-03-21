@@ -19,11 +19,13 @@ logger.setLevel(logging.INFO)
 class Tune(param.Parameterized):
     '''
     '''
-    def __init__(self, rgb_array, crs, transform):
+    def __init__(self, sources):
         super(Tune, self).__init__()
-        self.rgb_array = rgb_array
-        self.crs = crs
-        self.transform = transform
+        self.sources = sources
+        self.crs = sources[0].crs
+        self.transform = sources[0].transform
+        self.lowres_arr = self._resample(stride=50)
+        self.fullres_arr = self._resample(stride=None)
         
     rgb_scalar = param.Number(1.0, bounds=(0.0, 10.0))
     red_scalar = param.Number(1.0, bounds=(0.0, 10.0))
@@ -34,6 +36,13 @@ class Tune(param.Parameterized):
         'bins':50, 'histtype':'stepfilled', 'lw':0.0, 
         'stacked':False, 'alpha':0.3
     }
+
+    def _resample(self, stride):
+        '''
+
+        '''
+        sampled_bands = [s.read(1)[::stride, ::stride] for s in self.sources]
+        return np.dstack(tuple(sampled_bands))
 
     @staticmethod
     def _plot_array(array, hist_kwargs):
@@ -47,10 +56,10 @@ class Tune(param.Parameterized):
         plt.close('all')
         return fig
     
-    def _adjust_array(self):
+    def _adjust_array(self, arr):
         '''
         '''
-        arr = self.rgb_array * self.rgb_scalar
+        arr = arr * self.rgb_scalar
         red = arr[:,:,0] * self.red_scalar
         grn = arr[:,:,1] * self.grn_scalar
         blu = arr[:,:,2] * self.blu_scalar
@@ -58,51 +67,60 @@ class Tune(param.Parameterized):
 
         return reshape_as_raster(arr)
 
-    def _save_tiff(self, event):
+    @staticmethod
+    def _write_tiff(arr, outpath, crs, transform):
         '''
         
         '''
-        arr = self._adjust_array()
-
-        logger.info('Writing .tif to disk...')
+        logger.info('Writing %s to disk...', outpath)
 
         with rasterio.open(
-            'geotiffs/reference.tif',
+            outpath,
             'w',
             driver='GTiff',
-            height=arr.shape[1],
-            width=arr.shape[2],
-            count=3,
+            height=arr.shape[0],
+            width=arr.shape[1],
+            count=1,
             dtype=arr.dtype,
-            crs=self.crs,
-            transform=self.transform,
+            crs=crs,
+            transform=transform,
         ) as dst:
-            dst.write(arr[0,:,:], 1)
-            dst.write(arr[1,:,:], 2)
-            dst.write(arr[2,:,:], 3)
+            dst.write(arr, 1)
 
         logger.info('Write complete.')
+
+    
+    def _save_on_click(self, event):
+        '''
+        
+        '''
+        arr = self._adjust_array(arr=self.fullres_arr)
+        for i, band in zip(range(3), ('red','grn','blu')):
+            self._write_tiff(
+                arr[i,:,:],
+                outpath=f'geotiffs/2_hst/center_{band}.tif',
+                crs=self.crs,
+                transform=self.transform,
+            )
+            print('Saved following band to geotiffs/2_hst/...', band)
 
     def instantiate_button(self):
         '''
         '''
-        self.button = pn.widgets.Button(name='Save reference.tif to disk')
-        self.button.on_click(self._save_tiff)
+        self.button = pn.widgets.Button(name='Save hist-adjusted tifs to disk')
+        self.button.on_click(self._save_on_click)
     
-    @param.depends('rgb_scalar', 'red_scalar', 
-                   'grn_scalar', 'blu_scalar')
+    @param.depends('rgb_scalar', 'red_scalar', 'grn_scalar', 'blu_scalar')
     def serve_plots(self):
         '''
         '''
-        arr = self._adjust_array()
+        arr = self._adjust_array(arr=self.lowres_arr)
         return self._plot_array(arr, self.hist_kwargs)
     
 bands = ('red', 'grn', 'blu')
-srcs = [rasterio.open(f"geotiffs/1_toa/center_{b}.tif") for b in bands]
-downsampled_toa_bands = [s.read(1)[::50, ::50] for s in srcs]
-rgb_array = np.dstack(tuple(downsampled_toa_bands))
+sources = [rasterio.open(f"geotiffs/1_toa/center_{b}.tif") for b in bands]
 
-tune = Tune(rgb_array=rgb_array, crs=srcs[0].crs, transform=srcs[0].transform)
+tune = Tune(sources=sources)
 tune.instantiate_button()
 
 env = Environment(loader=FileSystemLoader('.'))

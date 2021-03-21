@@ -38,10 +38,10 @@ class Url():
         '''
 
         print("This function will transform latlon into wrs.")
-        print("Input is %s", latlon)
+        print("Input is,", latlon)
         
         wrs = ('041', '036')
-        print("Forcing specific values %s", wrs)
+        print("Forcing specific values:", wrs)
 
         return wrs
 
@@ -192,4 +192,4 @@ class Intake(Reflectance):
                 crs=reference.crs,
                 transform=reference.transform,
             )
-            print('Saved %s to disk', band_name)
+            print('Saved following band to geotiffs/1_toa/...', band_name)
