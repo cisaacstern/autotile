@@ -67,7 +67,8 @@ class Reflectance():
     '''
     @staticmethod
     def _load_scale_factors(filename, band_number):
-        '''
+        '''Credit to the Dask tutorial
+
         Parameters
         ----------
 
@@ -86,7 +87,8 @@ class Reflectance():
         return M_p, A_p
     
     def calc_reflectance(self, ds, band_number, metafile):
-        '''
+        '''Credit to the Dask tutorial
+
         Parameters
         ----------
 
@@ -108,8 +110,8 @@ class Intake(Reflectance):
 
     @staticmethod
     def _download_file(in_filename, out_filename):
-        '''
-        Credit to Dask tutorial.
+        '''Credit to Dask tutorial.
+        
         '''
         if not os.path.exists(out_filename):
             print("Downloading", in_filename)
