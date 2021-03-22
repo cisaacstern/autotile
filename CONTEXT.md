@@ -14,7 +14,7 @@ Researching visualization methods brought me to the [Terracotta](https://github.
 2. A method to programmatically and/or interactively adjust the color-balance of these images using arbitrary Python methods.
 3. A minimalist and aesthetically-pleasing way to view the served tiles.
 
-Working one-by-one, I determined that [this Dask + Rasterio tutorial](https://examples.dask.org/applications/satellite-imagery-geotiff.html) provided helpful methods for implementing #1; that Panel's parameterized class would provide a useful solution for #2; and finally, that Streamlit's Folium extension was an ideal and simple way to solve #3.
+Working one-by-one, I determined that [this Dask + Rasterio tutorial](https://examples.dask.org/applications/satellite-imagery-geotiff.html) provided helpful methods for implementing #1; that Panel's parameterized classes would provide a useful solution for #2; and finally, that Streamlit's Folium extension was an ideal and simple way to solve #3.
 
 While all of these services could be run independently, bringing them all together "under one CLI roof" made immediate intuitive sense to me. I'm a big believer in keeping it simple during the prototyping phase of any engineering effort. As such, a reached for `sys.argv` to implement this CLI. This approach is not necessarily the most user-friendly for outside users (for that, something like Click would be much better). But at the very beginning of the development process, it offers a "no fuss" way to get a proof-of-concept running.
 
