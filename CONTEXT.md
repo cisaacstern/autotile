@@ -1,6 +1,6 @@
 # Problem
 
-This project began when I encountered difficulty in interactively exploring full-resolution GeoTIFFs. In working with LiDAR pointcloud data over the last year (see https://cstern.io/projects/albedo), I'd become accustomed to using [Panel](http://panel.holoviz.org) for interactive data visualization. I find that exploring the data in this way imparts a uniquely valuable intuitive grasp over its characteristics.
+This project began when I encountered difficulty in interactively exploring full-resolution GeoTIFFs. In working with LiDAR pointcloud data over the last year (see https://cstern.io/projects/albedo), I'd become accustomed to using [Panel](http://panel.holoviz.org) for interactive data visualization. I find that exploring data in this way imparts a uniquely valuable intuitive grasp over its characteristics.
 
 The LiDAR pointclouds (and resulting interpolations) I've historically worked with are generally NumPy `ndarray`s comprised of fewer than 50,000 points. In-memory arrays of this size are handled easily and quickly by Panel and Matplotlib on my laptop.
 
