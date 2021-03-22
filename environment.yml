@@ -1,4 +1,4 @@
-name: autotiler
+name: autotile
 channels:
   - conda-forge
 dependencies:
